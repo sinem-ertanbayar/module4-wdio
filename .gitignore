@@ -21,6 +21,9 @@ allure-report/
 screenshots/
 videos/
 
+# WDIO HTML Reports
+reports/
+
 # Environment files
 .env
 .env.local

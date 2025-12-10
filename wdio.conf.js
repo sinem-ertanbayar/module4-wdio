@@ -1,3 +1,5 @@
+import { HtmlReporter } from 'wdio-html-nice-reporter';
+
 export const config = {
     runner: 'local',
     specs: [
@@ -40,7 +42,22 @@ export const config = {
         ignoreUndefinedDefinitions: false,
         retry: 2
     },
-    reporters: ['spec'],
+    reporters: [
+        // Spec reporter - shows results in console
+        ['spec', {
+            showPreface: false,
+            realtimeReporting: true
+        }],
+        // HTML reporter - generates HTML report files
+        [HtmlReporter, {
+            outputDir: './reports/html-reports/',
+            filename: 'test-report.html',
+            reportTitle: 'Test Automation Report',
+            showInBrowser: false,
+            collapseTests: false,
+            useOnAfterCommandForScreenshot: false
+        }]
+    ],
     before: async function (capabilities, specs) {
         // Runs before test execution begins
     },
