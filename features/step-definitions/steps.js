@@ -1,5 +1,6 @@
 import { Given, When, Then } from '@wdio/cucumber-framework';
-import { expect } from '@wdio/globals';
+import { expect as wdioExpect } from '@wdio/globals';
+import * as chai from 'chai';
 import LoginPage from '../../pages/LoginPage.js';
 import RegisterPage from '../../pages/RegisterPage.js';
 import ProfilePage from '../../pages/ProfilePage.js';
@@ -7,6 +8,9 @@ import HomePage from '../../pages/HomePage.js';
 import ProductPage from '../../pages/ProductPage.js';
 import CheckoutPage from '../../pages/CheckoutPage.js';
 import FavoritesPage from '../../pages/FavoritesPage.js';
+
+const { expect, assert } = chai;
+chai.should();
 
 // Test data
 const testUser = {
@@ -48,7 +52,7 @@ Then('I should be redirected to the login page', async () => {
     await browser.pause(5000);
     const url = await browser.getUrl();
     
-    await expect(url).toContain('/auth');
+    assert.include(url, '/auth', 'URL should contain /auth after registration');
 });
 
 Then('I should see a message confirming that my account has been created', async () => {
@@ -56,7 +60,7 @@ Then('I should see a message confirming that my account has been created', async
     await browser.pause(3000);
     // Registration success is verified by redirect or no error
     const url = await browser.getUrl();
-    await expect(url).toContain('/auth');
+    assert.include(url, '/auth', 'Registration successful - redirected to auth page');
 });
 
 Given('I am on the Toolshop login page', async () => {
@@ -73,12 +77,12 @@ When('I attempt to sign in using a valid email but an incorrect password', async
 
 Then('I should see an error message indicating invalid credentials', async () => {
     const isDisplayed = await LoginPage.isErrorDisplayed();
-    await expect(isDisplayed).toBe(true);
+    isDisplayed.should.equal(true, 'Error message should be displayed for invalid credentials');
 });
 
 Then('I should remain on the login page', async () => {
     const url = await browser.getUrl();
-    await expect(url).toContain('/auth/login');
+    url.should.include('/auth/login', 'User should remain on login page after failed login');
 });
 
 Given('I am logged in as a valid user', async () => {
@@ -103,12 +107,12 @@ Then('I should see a message confirming that my profile was updated', async () =
     await browser.pause(2000);
     // Profile update success verified by no error and data persists
     const url = await browser.getUrl();
-    await expect(url).toContain('/account/profile');
+    expect(url).to.include('/account/profile', 'User should be on profile page after update');
 });
 
 Then('the updated information should be displayed on the profile page', async () => {
     const firstName = await ProfilePage.getFirstNameValue();
-    await expect(firstName).toContain('UpdatedName');
+    expect(firstName).to.include('UpdatedName', 'First name should be updated');
 });
 
 Given('I am on the main product listing page', async () => {
@@ -139,10 +143,10 @@ Then('I should see an order confirmation page', async () => {
     
     if (confirmationExists) {
         const isDisplayed = await confirmation.isDisplayed();
-        await expect(isDisplayed).toBe(true);
+        expect(isDisplayed).to.equal(true, 'Order confirmation should be displayed');
     } else {
         const url = await browser.getUrl();
-        await expect(url).toContain('/checkout');
+        expect(url).to.include('/checkout', 'Should be on checkout page');
     }
 });
 
@@ -154,10 +158,10 @@ Then('the ordered product should appear in my order summary', async () => {
     
     if (confirmationExists) {
         const text = await confirmation.getText();
-        await expect(text).toContain('INV-');
+        assert.include(text, 'INV-', 'Order confirmation should contain invoice number');
     } else {
         const url = await browser.getUrl();
-        await expect(url).toContain('/checkout');
+        assert.include(url, '/checkout', 'Should be on checkout page');
     }
 });
 
@@ -172,13 +176,13 @@ Then('the product should be added to my favorites list', async () => {
 
 Then('it should be visible under the Favorites section with correct details', async () => {
     const count = await FavoritesPage.getFavoritesCount();
-    await expect(count).toBeGreaterThanOrEqual(0);
+    expect(count).to.be.at.least(0, 'Favorites count should be at least 0');
 });
 
 Given('I am on the main product listing page with the search bar visible', async () => {
     await HomePage.open();
     const searchInput = await HomePage.searchInput;
-    await expect(searchInput).toBeDisplayed();
+    await wdioExpect(searchInput).toBeDisplayed();
 });
 
 When('I enter the exact name of an existing product into the search field', async () => {
@@ -194,12 +198,12 @@ When('I perform the search', async () => {
 
 Then('the matching product should appear in the search results', async () => {
     const count = await HomePage.getProductCount();
-    await expect(count).toBeGreaterThan(0);
+    assert.isAbove(count, 0, 'At least one product should appear in search results');
 });
 
 Then('the product name and details should match my search term', async () => {
     const title = await HomePage.getFirstProductTitle();
-    await expect(title.toLowerCase()).toContain('pliers');
+    title.toLowerCase().should.include('pliers', 'Product title should contain search term');
 });
 
 Given('I am on the Toolshop main page in English', async () => {
@@ -211,8 +215,7 @@ Given('the language switcher is available', async () => {
     await browser.pause(1000);
     const langDropdown = await $('[data-test="language"]');
     const exists = await langDropdown.isExisting();
-    // If no language dropdown, just continue
-    await expect(exists || true).toBe(true);
+    (exists || true).should.equal(true, 'Language switcher check passed');
 });
 
 When('I change the language to another supported language', async () => {
@@ -223,19 +226,19 @@ Then('the interface should display all texts in the selected language', async ()
     // Language change verification
     await browser.pause(2000);
     const url = await browser.getUrl();
-    await expect(url).toContain('practicesoftwaretesting');
+    assert.include(url, 'practicesoftwaretesting', 'Should be on practice software testing site');
 });
 
 Then('the navigation menu should also update to the chosen language', async () => {
     // Verify we're still on the page
     const url = await browser.getUrl();
-    await expect(url).toContain('practicesoftwaretesting');
+    url.should.include('practicesoftwaretesting', 'Should remain on practice software testing site');
 });
 
 Given('product categories and sorting options are available', async () => {
     await browser.pause(2000);
     const sortDropdown = await HomePage.sortDropdown;
-    await expect(sortDropdown).toBeDisplayed();
+    await wdioExpect(sortDropdown).toBeDisplayed();
 });
 
 When('I filter products by a specific category', async () => {
@@ -267,7 +270,7 @@ When('I sort the filtered results by price from low to high', async () => {
 
 Then('only products from the selected category should be displayed', async () => {
     const count = await HomePage.getProductCount();
-    await expect(count).toBeGreaterThan(0);
+    assert.isAbove(count, 0, 'Products from selected category should be displayed');
 });
 
 Then('the displayed products should be ordered in ascending price order', async () => {
@@ -275,7 +278,7 @@ Then('the displayed products should be ordered in ascending price order', async 
     
     if (prices.length >= 2) {
         for (let i = 0; i < prices.length - 1; i++) {
-            await expect(prices[i]).toBeLessThanOrEqual(prices[i + 1]);
+            prices[i].should.be.at.most(prices[i + 1], 'Prices should be in ascending order');
         }
     }
 });
