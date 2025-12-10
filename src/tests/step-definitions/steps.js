@@ -1,39 +1,32 @@
 import { Given, When, Then } from '@wdio/cucumber-framework';
 import { expect } from '@wdio/globals';
-import LoginPage from '../../pages/LoginPage.js';
-import RegisterPage from '../../pages/RegisterPage.js';
-import ProfilePage from '../../pages/ProfilePage.js';
-import HomePage from '../../pages/HomePage.js';
-import ProductPage from '../../pages/ProductPage.js';
-import CheckoutPage from '../../pages/CheckoutPage.js';
-import FavoritesPage from '../../pages/FavoritesPage.js';
+import {
+    LoginPage,
+    RegisterPage,
+    ProfilePage,
+    HomePage,
+    ProductPage,
+    CheckoutPage,
+    FavoritesPage
+} from '../../../src/business/index.js';
+import {
+    generateTestUser,
+    existingUser,
+    invalidCredentials,
+    searchData,
+    profileUpdateData,
+    languages
+} from '../../../src/tests/data/index.js';
+import { WaitHelper } from '../../../src/core/index.js';
 
-// Test data
-const testUser = {
-    firstName: 'Test',
-    lastName: 'User',
-    email: `testuser${Date.now()}@example.com`,
-    password: 'Test@1234',
-    address: '123 Test Street',
-    city: 'Test City',
-    state: 'Test State',
-    country: 'US',
-    postcode: '12345',
-    phone: '1234567890',
-    dob: '1990-01-01'
-};
-
-const existingUser = {
-    email: 'customer@practicesoftwaretesting.com',
-    password: 'welcome01'
-};
+let testUser = generateTestUser();
 
 Given('I am on the Toolshop registration page', async () => {
     await RegisterPage.open();
 });
 
 Given('I am a new user without an existing account', async () => {
-    testUser.email = `testuser${Date.now()}@example.com`;
+    testUser = generateTestUser();
 });
 
 When('I fill in the registration form with valid and unique information', async () => {
@@ -45,17 +38,14 @@ When('I submit the registration form', async () => {
 });
 
 Then('I should be redirected to the login page', async () => {
-    await browser.pause(5000);
-    const url = await browser.getUrl();
-    
+    await WaitHelper.pause(5000);
+    const url = await RegisterPage.getUrl();
     await expect(url).toContain('/auth');
 });
 
 Then('I should see a message confirming that my account has been created', async () => {
-    // Wait for registration to complete
-    await browser.pause(3000);
-    // Registration success is verified by redirect or no error
-    const url = await browser.getUrl();
+    await WaitHelper.pause(3000);
+    const url = await RegisterPage.getUrl();
     await expect(url).toContain('/auth');
 });
 
@@ -63,12 +53,8 @@ Given('I am on the Toolshop login page', async () => {
     await LoginPage.open();
 });
 
-Given('I have a registered account', async () => {
-    // Using existing test account - no action needed
-});
-
 When('I attempt to sign in using a valid email but an incorrect password', async () => {
-    await LoginPage.login(existingUser.email, 'wrongpassword123');
+    await LoginPage.login(invalidCredentials.email, invalidCredentials.password);
 });
 
 Then('I should see an error message indicating invalid credentials', async () => {
@@ -77,7 +63,7 @@ Then('I should see an error message indicating invalid credentials', async () =>
 });
 
 Then('I should remain on the login page', async () => {
-    const url = await browser.getUrl();
+    const url = await LoginPage.getUrl();
     await expect(url).toContain('/auth/login');
 });
 
@@ -91,7 +77,7 @@ Given('I am on the user profile page', async () => {
 });
 
 When('I edit my profile information with valid data', async () => {
-    await ProfilePage.updateFirstName('UpdatedName');
+    await ProfilePage.updateFirstName(profileUpdateData.firstName);
 });
 
 When('I save the changes', async () => {
@@ -99,16 +85,14 @@ When('I save the changes', async () => {
 });
 
 Then('I should see a message confirming that my profile was updated', async () => {
-    // Wait for update to complete
-    await browser.pause(2000);
-    // Profile update success verified by no error and data persists
-    const url = await browser.getUrl();
+    await WaitHelper.pause(2000);
+    const url = await ProfilePage.getUrl();
     await expect(url).toContain('/account/profile');
 });
 
 Then('the updated information should be displayed on the profile page', async () => {
     const firstName = await ProfilePage.getFirstNameValue();
-    await expect(firstName).toContain('UpdatedName');
+    await expect(firstName).toContain(profileUpdateData.firstName);
 });
 
 Given('I am on the main product listing page', async () => {
@@ -132,31 +116,27 @@ When('I provide valid shipping and payment information', async () => {
 });
 
 Then('I should see an order confirmation page', async () => {
-    await browser.pause(3000);
+    await WaitHelper.pause(3000);
     
-    const confirmation = await $('#order-confirmation');
-    const confirmationExists = await confirmation.isExisting();
+    const confirmationExists = await CheckoutPage.isConfirmationDisplayed();
     
     if (confirmationExists) {
-        const isDisplayed = await confirmation.isDisplayed();
-        await expect(isDisplayed).toBe(true);
+        await expect(confirmationExists).toBe(true);
     } else {
-        const url = await browser.getUrl();
+        const url = await CheckoutPage.getUrl();
         await expect(url).toContain('/checkout');
     }
 });
 
 Then('the ordered product should appear in my order summary', async () => {
-    await browser.pause(1000);
+    await WaitHelper.pause(1000);
     
-    const confirmation = await $('#order-confirmation');
-    const confirmationExists = await confirmation.isExisting();
+    const invoiceText = await CheckoutPage.getInvoiceNumber();
     
-    if (confirmationExists) {
-        const text = await confirmation.getText();
-        await expect(text).toContain('INV-');
+    if (invoiceText) {
+        await expect(invoiceText).toContain('INV-');
     } else {
-        const url = await browser.getUrl();
+        const url = await CheckoutPage.getUrl();
         await expect(url).toContain('/checkout');
     }
 });
@@ -177,19 +157,19 @@ Then('it should be visible under the Favorites section with correct details', as
 
 Given('I am on the main product listing page with the search bar visible', async () => {
     await HomePage.open();
-    const searchInput = await HomePage.searchInput;
-    await expect(searchInput).toBeDisplayed();
+    const isVisible = await HomePage.isSearchBarVisible();
+    await expect(isVisible).toBe(true);
 });
 
 When('I enter the exact name of an existing product into the search field', async () => {
     const input = await HomePage.searchInput;
-    await input.setValue('Pliers');
+    await input.setValue(searchData.validProduct);
 });
 
 When('I perform the search', async () => {
     const btn = await HomePage.searchButton;
     await btn.click();
-    await browser.pause(2000);
+    await WaitHelper.pause(2000);
 });
 
 Then('the matching product should appear in the search results', async () => {
@@ -199,7 +179,7 @@ Then('the matching product should appear in the search results', async () => {
 
 Then('the product name and details should match my search term', async () => {
     const title = await HomePage.getFirstProductTitle();
-    await expect(title.toLowerCase()).toContain('pliers');
+    await expect(title.toLowerCase()).toContain(searchData.validProduct.toLowerCase());
 });
 
 Given('I am on the Toolshop main page in English', async () => {
@@ -207,58 +187,35 @@ Given('I am on the Toolshop main page in English', async () => {
 });
 
 Given('the language switcher is available', async () => {
-    // Language dropdown is available - check for language selector
-    await browser.pause(1000);
+    await WaitHelper.pause(1000);
     const langDropdown = await $('[data-test="language"]');
     const exists = await langDropdown.isExisting();
-    // If no language dropdown, just continue
     await expect(exists || true).toBe(true);
 });
 
 When('I change the language to another supported language', async () => {
-    await HomePage.changeLanguage('de');
+    await HomePage.changeLanguage(languages.german);
 });
 
 Then('the interface should display all texts in the selected language', async () => {
-    // Language change verification
-    await browser.pause(2000);
-    const url = await browser.getUrl();
+    await WaitHelper.pause(2000);
+    const url = await HomePage.getUrl();
     await expect(url).toContain('practicesoftwaretesting');
 });
 
 Then('the navigation menu should also update to the chosen language', async () => {
-    // Verify we're still on the page
-    const url = await browser.getUrl();
+    const url = await HomePage.getUrl();
     await expect(url).toContain('practicesoftwaretesting');
 });
 
 Given('product categories and sorting options are available', async () => {
-    await browser.pause(2000);
+    await WaitHelper.pause(2000);
     const sortDropdown = await HomePage.sortDropdown;
     await expect(sortDropdown).toBeDisplayed();
 });
 
 When('I filter products by a specific category', async () => {
-    // Wait for page to load
-    await browser.pause(2000);
-    
-    // Try clicking any category checkbox
-    const categoryCheckbox = await $('input[data-test^="category-"]');
-    
-    if (await categoryCheckbox.isExisting()) {
-        // Scroll to the element first
-        await categoryCheckbox.scrollIntoView();
-        await browser.pause(500);
-        
-        // Use JavaScript click if regular click doesn't work
-        try {
-            await categoryCheckbox.click();
-        } catch (e) {
-            await browser.execute((el) => el.click(), categoryCheckbox);
-        }
-    }
-    
-    await browser.pause(2000);
+    await HomePage.selectFirstCategory();
 });
 
 When('I sort the filtered results by price from low to high', async () => {

@@ -1,4 +1,5 @@
 import BasePage from './BasePage.js';
+import { Logger, WaitHelper } from '../../core/index.js';
 
 class ProfilePage extends BasePage {
     get firstNameInput() { return $('[data-test="first-name"]'); }
@@ -6,7 +7,6 @@ class ProfilePage extends BasePage {
     get emailInput() { return $('[data-test="email"]'); }
     get phoneInput() { return $('[data-test="phone"]'); }
     get updateButton() { return $('[data-test="update-profile-submit"]'); }
-    
     get successMessage() { return $('.alert-success, [data-test="profile-updated"]'); }
 
     async open() {
@@ -14,21 +14,34 @@ class ProfilePage extends BasePage {
     }
 
     async updateFirstName(name) {
-        const input = await this.firstNameInput;
-        await input.clearValue();
-        await input.setValue(name);
+        Logger.step(`Updating first name to: ${name}`);
+        await this.setInputValue(await this.firstNameInput, name);
+    }
+
+    async updateProfile(profileData) {
+        Logger.step('Updating profile information');
+        
+        if (profileData.firstName) {
+            await this.setInputValue(await this.firstNameInput, profileData.firstName);
+        }
+        if (profileData.lastName) {
+            await this.setInputValue(await this.lastNameInput, profileData.lastName);
+        }
+        if (profileData.phone) {
+            await this.setInputValue(await this.phoneInput, profileData.phone);
+        }
     }
 
     async submitUpdate() {
+        Logger.step('Submitting profile update');
         await this.clickElement(await this.updateButton);
-        await browser.pause(2000);
+        await WaitHelper.pause(2000);
     }
 
     async isSuccessMessageDisplayed() {
         try {
-            const success = await this.successMessage;
-            return await success.isDisplayed();
-        } catch (e) {
+            return await this.isDisplayed(await this.successMessage);
+        } catch {
             return false;
         }
     }

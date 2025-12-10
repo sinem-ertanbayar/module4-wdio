@@ -1,6 +1,8 @@
 import BasePage from './BasePage.js';
+import { Logger, WaitHelper } from '../../core/index.js';
 
 class LoginPage extends BasePage {
+    // Selectors
     get emailInput() { return $('[data-test="email"]'); }
     get passwordInput() { return $('[data-test="password"]'); }
     get loginButton() { return $('[data-test="login-submit"]'); }
@@ -11,20 +13,20 @@ class LoginPage extends BasePage {
     }
 
     async login(email, password) {
+        Logger.step(`Logging in with email: ${email}`);
         await this.setInputValue(await this.emailInput, email);
         await this.setInputValue(await this.passwordInput, password);
         await this.clickElement(await this.loginButton);
-        await browser.pause(2000);
+        await WaitHelper.pause(2000);
     }
 
     async isErrorDisplayed() {
         const error = await this.loginError;
-        return error.isDisplayed();
+        return this.isDisplayed(error);
     }
 
     async getErrorMessage() {
-        const error = await this.loginError;
-        return error.getText();
+        return this.getText(await this.loginError);
     }
 }
 

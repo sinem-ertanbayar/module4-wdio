@@ -1,4 +1,5 @@
 import BasePage from './BasePage.js';
+import { Element, Logger, WaitHelper } from '../../core/index.js';
 
 class HomePage extends BasePage {
     get searchInput() { return $('[data-test="search-query"]'); }
@@ -6,13 +7,9 @@ class HomePage extends BasePage {
     get productCards() { return $$('.card'); }
     get firstProductCard() { return $('.card'); }
     get sortDropdown() { return $('[data-test="sort"]'); }
-    
     get categoryCheckboxes() { return $$('input[data-test^="category-"]'); }
     get firstCategoryCheckbox() { return $('input[data-test^="category-"]'); }
-    get handToolsCategory() { return $('input[data-test="category-01KC3QTPD25J1QHJJBBN8P816R"]'); }
-    
     get languageDropdown() { return $('[data-test="language"]'); }
-    
     get productPrices() { return $$('[data-test="product-price"]'); }
     get productTitles() { return $$('.card-title'); }
 
@@ -21,14 +18,16 @@ class HomePage extends BasePage {
     }
 
     async search(query) {
+        Logger.step(`Searching for: ${query}`);
         await this.setInputValue(await this.searchInput, query);
         await this.clickElement(await this.searchButton);
-        await browser.pause(2000);
+        await WaitHelper.pause(2000);
     }
 
     async clickFirstProduct() {
+        Logger.step('Clicking on first product');
         await this.clickElement(await this.firstProductCard);
-        await browser.pause(2000);
+        await WaitHelper.pause(2000);
     }
 
     async getProductCount() {
@@ -37,30 +36,47 @@ class HomePage extends BasePage {
     }
 
     async sortByPriceLowToHigh() {
-        const sort = await this.sortDropdown;
-        await sort.selectByVisibleText('Price (Low - High)');
-        await browser.pause(2000);
+        Logger.step('Sorting products by price (low to high)');
+        await Element.selectByVisibleText(await this.sortDropdown, 'Price (Low - High)');
+        await WaitHelper.pause(2000);
     }
 
     async selectFirstCategory() {
+        Logger.step('Selecting first category');
         const checkbox = await this.firstCategoryCheckbox;
-        await checkbox.click();
-        await browser.pause(2000);
+        
+        if (await Element.isExisting(checkbox)) {
+            // Use JavaScript scroll to avoid timeout issues
+            await browser.execute((el) => {
+                el.scrollIntoView({ behavior: 'instant', block: 'center' });
+            }, checkbox);
+            await WaitHelper.pause(500);
+            
+            try {
+                await checkbox.click();
+            } catch {
+                await Element.jsClick(checkbox);
+            }
+        }
+        await WaitHelper.pause(2000);
     }
 
     async changeLanguage(langCode) {
+        Logger.step(`Changing language to: ${langCode}`);
         const langDropdown = await this.languageDropdown;
-        if (await langDropdown.isExisting()) {
+        
+        if (await Element.isExisting(langDropdown)) {
             await langDropdown.click();
-            await browser.pause(500);
+            await WaitHelper.pause(500);
+            
             const langOption = await $(`[data-test="lang-${langCode}"]`);
-            if (await langOption.isExisting()) {
+            if (await Element.isExisting(langOption)) {
                 await langOption.click();
             }
         } else {
             await browser.url(`/?lang=${langCode}`);
         }
-        await browser.pause(2000);
+        await WaitHelper.pause(2000);
     }
 
     async getFirstProductTitle() {
@@ -74,12 +90,17 @@ class HomePage extends BasePage {
     async getPrices() {
         const priceElements = await this.productPrices;
         const prices = [];
+        
         for (const el of priceElements) {
             const text = await el.getText();
             const value = parseFloat(text.replace(/[^0-9.]/g, ''));
             prices.push(value);
         }
         return prices;
+    }
+
+    async isSearchBarVisible() {
+        return this.isDisplayed(await this.searchInput);
     }
 }
 

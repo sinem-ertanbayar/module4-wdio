@@ -1,7 +1,7 @@
 export const config = {
     runner: 'local',
     specs: [
-        './features/**/*.feature'
+        './src/tests/features/**/*.feature'
     ],
     exclude: [],
     maxInstances: 2,
@@ -27,7 +27,7 @@ export const config = {
     services: [],
     framework: 'cucumber',
     cucumberOpts: {
-        require: ['./features/step-definitions/**/*.js'],
+        require: ['./src/tests/step-definitions/**/*.js'],
         backtrace: false,
         requireModule: [],
         dryRun: false,
