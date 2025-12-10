@@ -1,0 +1,26 @@
+# Dependencies
+node_modules/
+
+# WDIO logs
+logs/
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Test artifacts
+allure-results/
+allure-report/
+screenshots/
+videos/
+
+# Environment files
+.env
+.env.local
