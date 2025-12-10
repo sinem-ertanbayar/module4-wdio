@@ -8,9 +8,17 @@
     "test": "npx wdio run wdio.conf.js",
     "test:chrome": "npx wdio run wdio.chrome.conf.js",
     "test:firefox": "npx wdio run wdio.firefox.conf.js",
-    "test:all": "npm run test:chrome && npm run test:firefox"
+    "test:all": "npm run test:chrome && npm run test:firefox",
+    "test:api": "mocha --timeout 10000 api-tests/**/*.test.js"
   },
-  "keywords": ["wdio", "webdriverio", "e2e", "testing", "cucumber", "bdd"],
+  "keywords": [
+    "wdio",
+    "webdriverio",
+    "e2e",
+    "testing",
+    "cucumber",
+    "bdd"
+  ],
   "author": "",
   "license": "ISC",
   "devDependencies": {
@@ -21,6 +29,8 @@
     "@wdio/spec-reporter": "^9.20.0",
     "chromedriver": "^143.0.0",
     "geckodriver": "^6.1.0",
-    "safaridriver": "^1.0.0"
+    "mocha": "^11.7.5",
+    "safaridriver": "^1.0.0",
+    "supertest": "^7.1.4"
   }
 }
