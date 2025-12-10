@@ -1,4 +1,5 @@
 import BasePage from './BasePage.js';
+import { Logger, WaitHelper } from '../../core/index.js';
 
 class ProductPage extends BasePage {
     get addToCartButton() { return $('#btn-add-to-cart'); }
@@ -8,23 +9,28 @@ class ProductPage extends BasePage {
     get quantityInput() { return $('[data-test="quantity"]'); }
 
     async addToCart() {
+        Logger.step('Adding product to cart');
         await this.clickElement(await this.addToCartButton);
-        await browser.pause(1000);
+        await WaitHelper.pause(1000);
     }
 
     async addToFavorites() {
+        Logger.step('Adding product to favorites');
         await this.clickElement(await this.addToFavoritesButton);
-        await browser.pause(1000);
+        await WaitHelper.pause(1000);
     }
 
     async getProductName() {
-        const name = await this.productName;
-        return name.getText();
+        return this.getText(await this.productName);
     }
 
     async getProductPrice() {
-        const price = await this.productPrice;
-        return price.getText();
+        return this.getText(await this.productPrice);
+    }
+
+    async setQuantity(quantity) {
+        Logger.step(`Setting quantity to: ${quantity}`);
+        await this.setInputValue(await this.quantityInput, quantity.toString());
     }
 }
 

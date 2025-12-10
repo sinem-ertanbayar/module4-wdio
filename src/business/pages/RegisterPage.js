@@ -1,14 +1,12 @@
 import BasePage from './BasePage.js';
+import { Element, Logger, WaitHelper } from '../../core/index.js';
 
 class RegisterPage extends BasePage {
     get firstNameInput() { return $('[data-test="first-name"]'); }
     get lastNameInput() { return $('[data-test="last-name"]'); }
     get dobInput() { return $('[data-test="dob"]'); }
-    
     get streetInput() { return $('[data-test="street"]'); }
-    
     get postalCodeInput() { return $('[data-test="postal_code"]'); }
-    
     get cityInput() { return $('[data-test="city"]'); }
     get stateInput() { return $('[data-test="state"]'); }
     get countrySelect() { return $('[data-test="country"]'); }
@@ -23,6 +21,8 @@ class RegisterPage extends BasePage {
     }
 
     async fillRegistrationForm(userData) {
+        Logger.step('Filling registration form');
+        
         await this.setInputValue(await this.firstNameInput, userData.firstName);
         await this.setInputValue(await this.lastNameInput, userData.lastName);
         await this.setInputValue(await this.dobInput, userData.dob);
@@ -31,8 +31,7 @@ class RegisterPage extends BasePage {
         await this.setInputValue(await this.cityInput, userData.city);
         await this.setInputValue(await this.stateInput, userData.state);
         
-        const country = await this.countrySelect;
-        await country.selectByIndex(1);
+        await Element.selectByIndex(await this.countrySelect, 1);
         
         await this.setInputValue(await this.phoneInput, userData.phone);
         await this.setInputValue(await this.emailInput, userData.email);
@@ -40,13 +39,13 @@ class RegisterPage extends BasePage {
     }
 
     async submitForm() {
+        Logger.step('Submitting registration form');
         await this.clickElement(await this.registerButton);
-        await browser.pause(2000);
+        await WaitHelper.pause(2000);
     }
 
     async isErrorDisplayed() {
-        const error = await this.registerError;
-        return error.isDisplayed();
+        return this.isDisplayed(await this.registerError);
     }
 }
 
